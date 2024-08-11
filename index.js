@@ -14,6 +14,11 @@ app.get('/', (req, res) => {
   res.send('')
 })
 
+app.post('/lol', (req, res) => {
+  console.log('BODY ', req.body)
+  res.json(req.body)
+})
+
 app.use('/qr', QRRouter)
 
 app.listen(PORT, () => {
