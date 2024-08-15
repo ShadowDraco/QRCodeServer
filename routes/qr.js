@@ -7,8 +7,21 @@ let allTimeQRs = 0;
 let allTimeScans = 0;
 
 router.get("/all", (req, res) => {
-  // TODO - Filter by password
-  res.json({ allQRS: allQRCodes, allTimeQRs, allTimeScans });
+  const returnQRs = allQRCodes.filter((qr) => !qr.protected);
+
+  res.json({ allQRS: returnQRs, allTimeQRs, allTimeScans });
+});
+
+router.post("/code", (req, res) => {
+  const code = req.body.code;
+  let returnQRs = [];
+  if (code) {
+    returnQRs.push(allQRCodes.filter((qr) => qr.code == code));
+  } else {
+    returnQRs.push(allQRCodes.filter((qr) => !qr.protected));
+  }
+
+  res.json({ codeQRs: returnQRs, allTimeQRs, allTimeScans, erorr: "" });
 });
 
 router.get("/visit/:url", (req, res) => {
