@@ -1,6 +1,6 @@
 # THE Free QR
 
-[Frontend](https://github.com/ShadowDraco/QRCodeFrontend)
+[Frontend](https://github.com/ShadowDraco/The-Free-QR-Frontend)
 
 A Free and open source QR code generator.
 The goal is to provide QR's that never *Cost*, *Expire*, or *require* useless information from the user.
