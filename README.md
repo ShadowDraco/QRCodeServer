@@ -72,7 +72,13 @@ Uses request body, `{ url, code, protected? }` to create a new QR, store it, and
 To run this project, you will need to add the following environment variables to your .env file
 
 Front End
-`NEXT_PUBLIC_URL` = "http://localhost:3000" 
+`NEXT_PUBLIC_URL` = "http://localhost:3001"
+`MAILGUN_SECRET_KEY` = YOUR-MAILGUN-KEY
+`MAILGUN_DOMAIN` = YOUR-MAILGUN-DOMAIN
+^ Needed in production
+
+`NEXT_PUBLIC_NEXT_URL` = "http://localhost:3000"
+^ Same as `NEXT_PUBLIC_URL` in production
 
 Backend 
 `URL` = "http://localhost:3001"
