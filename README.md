@@ -18,7 +18,7 @@ The website has no secrets and stores no personal information. All QR's have the
 - Users can message for support
 - QRs stored in database
 - NSFW QR filtering
-- (TODO) Add password for creator to edit QRs
+- (WIP) Owner uses password to update/delete existing QRs
 
 ## API Reference
 
