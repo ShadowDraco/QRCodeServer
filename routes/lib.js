@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const QRModel = require("../models/qr");
+const StatsModel = require("../models/stats");
 
 const checkForBadURLS = (url, code) => {
   let badURL = false;
@@ -25,7 +26,7 @@ const detectDuplicateQR = async (url, code) => {
     console.error("There was an error detecting duplicate QR");
   }
 
-  if (duplicateQR) {
+  if (duplicateQR.length > 0) {
     return true;
   }
 
@@ -34,8 +35,21 @@ const detectDuplicateQR = async (url, code) => {
 
 const saveQRToDatabase = async (newQR) => {
   const document = await QRModel.create({ ...newQR });
-  //const count = await db.collection("allTimeQRs").increment()
-  console.log("New QR Created: ", document);
+};
+
+const updateScansInDatabase = async () => {
+  const stats = await StatsModel.findOneAndUpdate({}, { $inc: { scans: 1 } });
+};
+
+const updateQRsInDatabase = async () => {
+  const stats = await StatsModel.findOneAndUpdate({}, { $inc: { created: 1 } });
+};
+
+const updateQRCount = async (QR) => {
+  const updated = await StatsModel.findOneAndUpdate(
+    { QR },
+    { $inc: { count: 1 } }
+  );
 };
 
 const getAllQRsFromDatabase = async () => {
@@ -54,20 +68,49 @@ const getGroupFromDatabase = async (code) => {
   return qrGroup;
 };
 
+const getStatsFromDatabase = async () => {
+  const stats = await StatsModel.findOne();
+  // Created first becase created is first on the webpage and destructured elsewhere with QR, Scans
+  return [stats?.created, stats?.scans];
+};
+
 const adminDeleteAllQRs = async () => {
   try {
     const allDeleted = await QRModel.deleteMany();
-    console.log("All documents deleted", allDeleted);
+    const deletedStats = await StatsModel.findOneAndUpdate(
+      {},
+      { scans: 0, created: 0 }
+    );
+    console.log(
+      "All QRs deleted:",
+      allDeleted,
+      "\nAll stats deleted:",
+      deletedStats
+    );
   } catch (error) {
     console.error("Error deleting all documents");
   }
 };
 
-//! DO NOT ALLOW QR CODES FROM THESE SITES
+const adminCreateStats = async () => {
+  try {
+    const stats = await StatsModel.create({ scans: 0, created: 0 });
+    console.log("Successfully created empty stats", stats);
+  } catch (error) {
+    console.error("Error creating base stats", error);
+  }
+};
+
+//! DO NOT ALLOW QR CODES FROM THESE SITES OR WORDS
 const badURLS = [
   "hentai",
   "sex",
   "porn",
+  "shit",
+  "dick",
+  "pussy",
+  "cunt",
+  "bitch",
   "fuck",
   "slut",
   "sexy",
@@ -372,7 +415,7 @@ const badURLS = [
   "Rule34App",
   "Kusowanka",
   "Hanime.tv",
-  "Hentai Haven",
+  "HentaiHaven",
   "Rule34Video",
   "AnimeIDHentai",
   "Hentai.tv",
@@ -415,9 +458,9 @@ const badURLS = [
   "Manhwa18.org",
   "FreeComicOnline.me",
   "TabooFlix",
-  "Motherless Taboo",
+  "MotherlessTaboo",
   "MilfNut",
-  "Family Porn",
+  "FamilyPorn",
   "TabooTube",
   "Milfzr",
   "TabooPorn.tv",
@@ -426,10 +469,10 @@ const badURLS = [
   "TabooVidz",
   "FamilyPornHD",
   "JustTabooPorn",
-  "XVideos Taboo",
-  "SxyPrn Taboo",
+  "XVideosTaboo",
+  "SxyPrnTaboo",
   "MotherSonTube",
-  "iXXX Taboo",
+  "iXXXTaboo",
   "TabooDude",
   "TabooPorn.to",
   "MILFCaps",
@@ -541,8 +584,13 @@ module.exports = {
   saveQRToDatabase,
   adminDeleteAllQRs,
   badURLS,
+  adminCreateStats,
   detectDuplicateQR,
   checkForBadURLS,
   getAllQRsFromDatabase,
   getGroupFromDatabase,
+  getStatsFromDatabase,
+  updateQRsInDatabase,
+  updateScansInDatabase,
+  updateQRCount,
 };
