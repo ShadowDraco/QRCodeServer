@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-
 var QRCode = require('qrcode')
 
 const AllQRCodes = []
@@ -17,8 +16,14 @@ router.get('/visit/:url', (req, res) => {
   }
 })
 
-router.post('/create/:url', (req, res) => {
-  const createUrl = req.params.url
+router.post('/create', async (req, res) => {
+  console.log(req.body)
+  const createUrl = req.body.url
+
+  if (!req.body) {
+    res.json({ message: 'Something is wrong' })
+  }
+
   let returnData = { message: '', QR: '', error: '' }
   // if duplicate url
   if (AllQRCodes.find(QR => QR.url == createUrl)) {
