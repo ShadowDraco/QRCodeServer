@@ -4,10 +4,21 @@ var QRCode = require("qrcode");
 
 const mongoose = require("mongoose");
 const QRModel = require("../models/qr");
+const {
+  saveQRToDatabase,
+  adminDeleteAllQRs,
+  checkForBadURLS,
+  getAllQRsFromDatabase,
+  getGroupFromDatabase,
+  detectDuplicateQR,
+} = require("./lib");
 
 const allQRCodes = [];
 let allTimeQRs = 0;
 let allTimeScans = 0;
+
+//? call once to clear database
+//adminDeleteAllQRs();
 
 router.get("/all", async (req, res) => {
   //const returnQRs = allQRCodes.filter((qr) => !qr.protected);
@@ -17,21 +28,16 @@ router.get("/all", async (req, res) => {
 
 router.post("/code", (req, res) => {
   const code = req.body.code;
-  let returnQRs = [];
-  if (code) {
-    returnQRs.push(allQRCodes.filter((qr) => qr.code == code));
-  } else {
-    returnQRs.push(allQRCodes.filter((qr) => !qr.protected));
-  }
+  const returnQRs = getGroupFromDatabase(code);
 
   res.json({ codeQRs: returnQRs, allTimeQRs, allTimeScans, erorr: "" });
 });
 
-router.get("/visit/:url", (req, res) => {
+router.get("/visit/:url", async (req, res) => {
   let visitUrl = req.params.url;
   let decodedUrl = decodeURIComponent(visitUrl);
 
-  let QR = allQRCodes.find((QR) => QR.url == decodedUrl);
+  let QR = await QRModel.find((QR) => QR.url == decodedUrl);
 
   if (QR) {
     QR.count += 1;
@@ -43,69 +49,59 @@ router.get("/visit/:url", (req, res) => {
 });
 
 router.post("/create", async (req, res) => {
+  if (!req.body) {
+    res.json({ message: "Something is wrong", error: "No request body" });
+  }
+
   let returnData = {
     message: "",
     QR: "",
     error: "",
   };
 
-  if (!req.body) {
-    console.error("NO Request Body");
-    res.json({ message: "Something is wrong", error: "No request body" });
-  }
-
   const createUrl = req.body.url;
   const createCode = req.body.code;
   const createProtected = req.body.protected;
 
+  // if bad/nsfw url
+  if (checkForBadURLS(createUrl, createCode)) {
+    returnData.error = "Do not create NSFW QRS";
+    res.json(returnData);
+  }
   // if duplicate url
-  if (allQRCodes.find((QR) => QR.url == createUrl && QR.code == createCode)) {
-    console.error("Duplicate QR");
+  if (detectDuplicateQR(createUrl, createCode)) {
     returnData.error = "You cannot create duplicate QR's";
     res.json(returnData);
-  } else {
-    // create qr
-    try {
-      let encodedUrl = encodeURIComponent(createUrl);
+  }
+  // create qr
+  try {
+    let encodedUrl = encodeURIComponent(createUrl);
 
-      QRCode.toDataURL(
-        `${process.env.URL}/qr/visit/${encodedUrl}`,
-        function (err, url) {
-          newQR = {
-            qr: url,
-            url: createUrl,
-            count: 0,
-            code: createCode,
-            protected: createProtected,
-          };
-          allQRCodes.push(newQR);
-          console.log(newQR);
-          saveQRToDatabase(newQR);
-          returnData.QR = newQR;
-          returnData.message = "Successful!";
-          allTimeQRs += 1;
-          returnData.allTimeScans = allTimeScans;
-          returnData.allTimeQRs = allTimeQRs;
-          res.json(returnData);
-        }
-      );
-    } catch (err) {
-      console.error("Error creating QR Code", err);
-      returnData.error = err;
-      res.json(returnData);
-    }
+    QRCode.toDataURL(
+      `${process.env.URL}/qr/visit/${encodedUrl}`,
+      function (err, url) {
+        newQR = {
+          qr: url,
+          url: createUrl,
+          count: 0,
+          code: createCode,
+          protected: createProtected,
+        };
+        allQRCodes.push(newQR);
+        saveQRToDatabase(newQR);
+        returnData.QR = newQR;
+        returnData.message = "Successful!";
+        allTimeQRs += 1;
+        returnData.allTimeScans = allTimeScans;
+        returnData.allTimeQRs = allTimeQRs;
+        res.json(returnData);
+      }
+    );
+  } catch (err) {
+    console.error("Error creating QR Code", err);
+    returnData.error = err;
+    res.json(returnData);
   }
 });
-
-const saveQRToDatabase = async (newQR) => {
-  const document = await QRModel.create({ ...newQR });
-  //const count = await db.collection("allTimeQRs").increment()
-  console.log("New QR Created: ", document);
-};
-
-const getAllQRsFromDatabase = async () => {
-  const allDocuments = await QRModel.find({ protected: false }).exec();
-  return allDocuments;
-};
 
 module.exports = router;
