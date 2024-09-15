@@ -2,12 +2,17 @@ require("dotenv").config();
 const { rateLimit } = require("express-rate-limit");
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 50,
   standardHeaders: "draft-7",
   legacyHeaders: false,
 });
+
+mongoose
+  .connect(process.env.MONGO_CONNECTION_URI)
+  .then(console.log("Database connected"));
 
 const app = express();
 

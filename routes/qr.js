@@ -2,13 +2,16 @@ const express = require("express");
 const router = express.Router();
 var QRCode = require("qrcode");
 
+const mongoose = require("mongoose");
+const QRModel = require("../models/qr");
+
 const allQRCodes = [];
 let allTimeQRs = 0;
 let allTimeScans = 0;
 
-router.get("/all", (req, res) => {
-  const returnQRs = allQRCodes.filter((qr) => !qr.protected);
-
+router.get("/all", async (req, res) => {
+  //const returnQRs = allQRCodes.filter((qr) => !qr.protected);
+  const returnQRs = await getAllQRsFromDatabase();
   res.json({ allQRS: returnQRs, allTimeQRs, allTimeScans });
 });
 
@@ -76,6 +79,8 @@ router.post("/create", async (req, res) => {
             protected: createProtected,
           };
           allQRCodes.push(newQR);
+          console.log(newQR);
+          saveQRToDatabase(newQR);
           returnData.QR = newQR;
           returnData.message = "Successful!";
           allTimeQRs += 1;
@@ -91,5 +96,16 @@ router.post("/create", async (req, res) => {
     }
   }
 });
+
+const saveQRToDatabase = async (newQR) => {
+  const document = await QRModel.create({ ...newQR });
+  //const count = await db.collection("allTimeQRs").increment()
+  console.log("New QR Created: ", document);
+};
+
+const getAllQRsFromDatabase = async () => {
+  const allDocuments = await QRModel.find({ protected: false }).exec();
+  return allDocuments;
+};
 
 module.exports = router;
