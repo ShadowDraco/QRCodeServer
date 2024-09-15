@@ -36,7 +36,7 @@ router.post('/create', async (req, res) => {
   // create qr
   try {
     QRCode.toDataURL(
-      `${process.env.URL}/visit/${createUrl}`,
+      `${process.env.URL}/qr/visit/${createUrl}`,
       function (err, url) {
         newQR = { qr: url, url: createUrl, count: 0 }
         AllQRCodes.push(newQR)
