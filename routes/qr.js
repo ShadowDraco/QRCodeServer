@@ -4,6 +4,10 @@ var QRCode = require('qrcode')
 
 const AllQRCodes = []
 
+router.get('/all', (req, res) => {
+  res.json(AllQRCodes)
+})
+
 router.get('/visit/:url', (req, res) => {
   let visitUrl = req.params.url
   let QR = AllQRCodes.find(QR => QR.url == visitUrl)
@@ -17,7 +21,6 @@ router.get('/visit/:url', (req, res) => {
 })
 
 router.post('/create', async (req, res) => {
-  console.log(req.body)
   const createUrl = req.body.url
 
   if (!req.body) {
@@ -39,7 +42,6 @@ router.post('/create', async (req, res) => {
         AllQRCodes.push(newQR)
         returnData.QR = newQR
         returnData.message = 'Successful!'
-        console.log(AllQRCodes)
         res.json(returnData)
       }
     )
